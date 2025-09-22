@@ -1,18 +1,28 @@
 package org.example;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
+import java.awt.Image;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.math.BigInteger;
 import javax.swing.*;
 
 /**
- * Proyecto: Algoritmos
- * 6 métodos: Cuadrados medios, Productos medios, Multiplicador constante,
- * Lineal (CORREGIDO: r = X/(m-1)), Congruencial multiplicativo, Aditivo (lag-k).
+ * Programa sencillo de generación de números pseudoaleatorios.
+ * Algoritmos:
+ *  - Cuadrados medios
+ *  - Productos medios
+ *  - Multiplicador constante
+ *  - Lineal (r = X/(m-1))
+ *  - Congruencial multiplicativo
+ *  - Congruencial aditivo (lag-k)
  *
- * - Todos los JTextField inician en blanco.
- * - Se habilitan solo los campos necesarios para el algoritmo elegido.
- * - Se imprime r=... (no U=...).
- * - Usa FlatLaf si está disponible (opcional).
+ * Lógica simple (if/else), campos en blanco, botón para guardar TXT y
+ * selector de cantidad de decimales para r.
  */
 public class Algoritmos extends JFrame {
 
@@ -26,23 +36,25 @@ public class Algoritmos extends JFrame {
     };
 
     private JComboBox<String> comboAlgoritmo;
-
-    private JTextField txtN, txtX0, txtX1, txtA, txtC, txtM, txtK, txtConstante;
-    private JTextField txtSemillas;   // para aditivo lag-k (lista coma-separada)
+    private JTextField txtN, txtX0, txtX1, txtA, txtC, txtM, txtK, txtConstante, txtSemillas;
+    private JTextField txtDecimales; // NUEVO: cantidad de decimales para r
     private JTextArea areaSalida;
-    private JButton btnGenerar;
+    private JButton btnGenerar, btnGuardar;
 
     public Algoritmos() {
-        super("Generadores Pseudoaleatorios");
+        super("Algoritmos");
 
-        // FlatLaf (opcional)
         try {
-            UIManager.setLookAndFeel("com.formdev.flatlaf.FlatDarculaLaf");
+            UIManager.setLookAndFeel("com.formdev.flatlaf.FlatLightLaf");
             SwingUtilities.updateComponentTreeUI(this);
         } catch (Exception ignored) {}
 
-        comboAlgoritmo = new JComboBox<>(OPCIONES);
+        try {
+            Image icon = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/recursos/logo.png"));
+            setIconImage(icon);
+        } catch (Exception ignored) {}
 
+        comboAlgoritmo = new JComboBox<>(OPCIONES);
         txtN = new JTextField();
         txtX0 = new JTextField();
         txtX1 = new JTextField();
@@ -52,41 +64,57 @@ public class Algoritmos extends JFrame {
         txtK  = new JTextField();
         txtConstante = new JTextField();
         txtSemillas  = new JTextField();
+        txtDecimales = new JTextField(); // vacío por defecto (usa 4 si está vacío)
 
-        areaSalida = new JTextArea(15, 50);
+        areaSalida = new JTextArea(15, 60);
         areaSalida.setEditable(false);
         JScrollPane scroll = new JScrollPane(areaSalida);
 
         btnGenerar = new JButton("Generar");
+        btnGuardar = new JButton("Guardar");
 
-        JPanel panelArriba = new JPanel(new GridLayout(0, 2, 5, 5));
-        panelArriba.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
-        panelArriba.add(new JLabel("Algoritmo:")); panelArriba.add(comboAlgoritmo);
-        panelArriba.add(new JLabel("Cantidad n:")); panelArriba.add(txtN);
+        JPanel arriba = new JPanel(new GridLayout(0, 2, 5, 5));
+        arriba.setBorder(BorderFactory.createEmptyBorder(8,8,8,8));
+        arriba.add(new JLabel("Algoritmo:")); arriba.add(comboAlgoritmo);
+        arriba.add(new JLabel("Cantidad n:")); arriba.add(txtN);
 
-        panelArriba.add(new JLabel("Semilla X0:")); panelArriba.add(txtX0);
-        panelArriba.add(new JLabel("Semilla X1:")); panelArriba.add(txtX1);
+        arriba.add(new JLabel("Semilla X0:")); arriba.add(txtX0);
+        arriba.add(new JLabel("Semilla X1 (solo productos):")); arriba.add(txtX1);
 
-        panelArriba.add(new JLabel("a:")); panelArriba.add(txtA);
-        panelArriba.add(new JLabel("c:")); panelArriba.add(txtC);
-        panelArriba.add(new JLabel("m:")); panelArriba.add(txtM);
+        arriba.add(new JLabel("a:")); arriba.add(txtA);
+        arriba.add(new JLabel("c:")); arriba.add(txtC);
+        arriba.add(new JLabel("m:")); arriba.add(txtM);
 
-        panelArriba.add(new JLabel("k dígitos (medios):")); panelArriba.add(txtK);
-        panelArriba.add(new JLabel("Constante (mult. constante):")); panelArriba.add(txtConstante);
+        arriba.add(new JLabel("k dígitos (medios):")); arriba.add(txtK);
+        arriba.add(new JLabel("Constante (mult. constante):")); arriba.add(txtConstante);
 
-        panelArriba.add(new JLabel("Semillas:")); panelArriba.add(txtSemillas);
+        arriba.add(new JLabel("Semillas:")); arriba.add(txtSemillas);
+
+        // NUEVO: selector de decimales
+        arriba.add(new JLabel("Decimales:")); arriba.add(txtDecimales);
+
+        JPanel abajo = new JPanel();
+        abajo.add(btnGuardar);
+        abajo.add(btnGenerar);
 
         setLayout(new BorderLayout());
-        add(panelArriba, BorderLayout.NORTH);
+        add(arriba, BorderLayout.NORTH);
         add(scroll, BorderLayout.CENTER);
-        add(btnGenerar, BorderLayout.SOUTH);
+        add(abajo, BorderLayout.SOUTH);
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(800, 560);
+        setSize(840, 600);
         setLocationRelativeTo(null);
 
-        comboAlgoritmo.addActionListener(e -> actualizarCampos());
-        btnGenerar.addActionListener(e -> generar());
+        comboAlgoritmo.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) { actualizarCampos(); }
+        });
+        btnGenerar.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) { generar(); }
+        });
+        btnGuardar.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) { guardarComoTxt(); }
+        });
 
         actualizarCampos();
     }
@@ -94,8 +122,8 @@ public class Algoritmos extends JFrame {
     private void actualizarCampos() {
         String alg = (String) comboAlgoritmo.getSelectedItem();
         setAllEnabled(false);
-
         txtN.setEnabled(true);
+        txtDecimales.setEnabled(true); // siempre configurable
 
         if (alg.equals("Algoritmo de cuadrados medios")) {
             txtX0.setEnabled(true);
@@ -138,6 +166,7 @@ public class Algoritmos extends JFrame {
         txtK.setEnabled(enabled);
         txtConstante.setEnabled(enabled);
         txtSemillas.setEnabled(enabled);
+        txtDecimales.setEnabled(enabled);
     }
 
     private void generar() {
@@ -145,6 +174,7 @@ public class Algoritmos extends JFrame {
         try {
             String alg = (String) comboAlgoritmo.getSelectedItem();
             int n = leerEntero(txtN, "n");
+            int dec = leerDecimales(txtDecimales); // 0-12, por defecto 4
 
             if (alg.equals("Algoritmo de cuadrados medios")) {
                 String x = leerTexto(txtX0, "X0");
@@ -152,8 +182,8 @@ public class Algoritmos extends JFrame {
                 for (int i = 1; i <= n; i++) {
                     BigInteger v = new BigInteger(x).multiply(new BigInteger(x));
                     x = extraerMedios(v.toString(), k);
-                    double r = toR_fromDigits(x, k);          // r = X/10^k
-                    areaSalida.append(i + ") X=" + x + "  r=" + r + "\n");
+                    double r = toR_fromDigits(x, k);
+                    areaSalida.append(i + ") X=" + x + "  r=" + fmt(r, dec) + "\n");
                 }
 
             } else if (alg.equals("Algoritmo de productos medios")) {
@@ -163,8 +193,8 @@ public class Algoritmos extends JFrame {
                 for (int i = 1; i <= n; i++) {
                     BigInteger v = new BigInteger(prev).multiply(new BigInteger(curr));
                     String next = extraerMedios(v.toString(), k);
-                    double r = toR_fromDigits(next, k);       // r = X/10^k
-                    areaSalida.append(i + ") X=" + next + "  r=" + r + "\n");
+                    double r = toR_fromDigits(next, k);
+                    areaSalida.append(i + ") X=" + next + "  r=" + fmt(r, dec) + "\n");
                     prev = curr; curr = next;
                 }
 
@@ -175,22 +205,20 @@ public class Algoritmos extends JFrame {
                 for (int i = 1; i <= n; i++) {
                     BigInteger v = new BigInteger(x).multiply(aConst);
                     x = extraerMedios(v.toString(), k);
-                    double r = toR_fromDigits(x, k);          // r = X/10^k
-                    areaSalida.append(i + ") X=" + x + "  r=" + r + "\n");
+                    double r = toR_fromDigits(x, k);
+                    areaSalida.append(i + ") X=" + x + "  r=" + fmt(r, dec) + "\n");
                 }
 
             } else if (alg.equals("Algoritmo lineal")) {
-                // CORREGIDO: r = X/(m-1)
                 long x = leerLong(txtX0, "X0");
                 long a = leerLong(txtA, "a");
                 long c = leerLong(txtC, "c");
                 long m = leerLong(txtM, "m");
                 if (m <= 1) throw new IllegalArgumentException("m debe ser > 1 para usar r = X/(m-1).");
-
                 for (int i = 1; i <= n; i++) {
-                    x = Math.floorMod(a * x + c, m);          // X_{n+1} = (aX_n + c) mod m
-                    double r = x / (double) (m - 1);          // *** r = X / (m - 1) ***
-                    areaSalida.append(String.format("%d) X=%d  r=%.4f%n", i, x, r));
+                    x = Math.floorMod(a * x + c, m);
+                    double r = x / (double) (m - 1);
+                    areaSalida.append(i + ") X=" + x + "  r=" + fmt(r, dec) + "\n");
                 }
 
             } else if (alg.equals("Algoritmo congruencial multiplicativo")) {
@@ -198,80 +226,86 @@ public class Algoritmos extends JFrame {
                 long a = leerLong(txtA, "a");
                 long m = leerLong(txtM, "m");
                 for (int i = 1; i <= n; i++) {
-                    x = Math.floorMod(a * x, m);              // X_{n+1} = (aX_n) mod m
-                    double r = (double) x / (m-1);                // (se mantiene como estaba)
-                    areaSalida.append(i + ") X=" + x + "  r=" + r + "\n");
+                    x = Math.floorMod(a * x, m);
+                    double r = x / (double) m;
+                    areaSalida.append(i + ") X=" + x + "  r=" + fmt(r, dec) + "\n");
                 }
 
             } else if (alg.equals("Algoritmo congruencial aditivo")) {
                 long m = leerLong(txtM, "m");
-                int[] seedsRaw = parseListaEnteros(txtSemillas);
-                if (seedsRaw.length == 0)
-                    throw new IllegalArgumentException("Falta la lista de semillas.");
-                int k = seedsRaw.length;
+                int[] seeds = parseListaEnteros(txtSemillas);
+                if (seeds.length == 0) throw new IllegalArgumentException("Falta la lista de semillas (lag-k).");
+                int k = seeds.length;
 
                 long[] X = new long[k + n];
-
                 for (int i = 0; i < k; i++) {
-                    long xi = seedsRaw[i];
-                    xi = ((xi % m) + m) % m; // normalizar
+                    long xi = seeds[i];
+                    xi = ((xi % m) + m) % m;
                     X[i] = xi;
                 }
-
                 for (int i = k; i < k + n; i++) {
-                    long xi = (X[i - 1] + X[i - k]) % m;      // lag-k
+                    long xi = (X[i - 1] + X[i - k]) % m;
                     X[i] = xi;
                 }
-
                 for (int i = k; i < k + n; i++) {
                     long xi = X[i];
-                    double r = (double) xi / (double) m;
+                    double r = xi / (double) m;
                     int idx = (i - k) + 1;
-                    // Mostrar r con 8 decimales
-                    areaSalida.append(String.format("%d) X=%d  r=%.8f%n", idx, xi, r));
+                    areaSalida.append(idx + ") X=" + xi + "  r=" + fmt(r, dec) + "\n");
                 }
             }
 
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(),
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(),
                     "Datos inválidos", JOptionPane.WARNING_MESSAGE);
         }
     }
 
-    // -------- Helpers --------
+    private void guardarComoTxt() {
+        try {
+            JFileChooser fc = new JFileChooser();
+            fc.setSelectedFile(new File("resultado.txt"));
+            int r = fc.showSaveDialog(this);
+            if (r == JFileChooser.APPROVE_OPTION) {
+                File f = fc.getSelectedFile();
+                try (PrintWriter pw = new PrintWriter(new FileWriter(f))) {
+                    pw.print(areaSalida.getText());
+                }
+                JOptionPane.showMessageDialog(this, "Guardado en: " + f.getAbsolutePath());
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "No se pudo guardar: " + ex.getMessage(),
+                    "Error al guardar", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // ===== Helpers =====
     private int leerEntero(JTextField tf, String nombre) {
         String s = tf.getText();
-        if (s == null || s.trim().isEmpty())
-            throw new IllegalArgumentException("Falta " + nombre);
+        if (s == null || s.trim().isEmpty()) throw new IllegalArgumentException("Falta " + nombre);
         return Integer.parseInt(s.trim());
     }
     private long leerLong(JTextField tf, String nombre) {
         String s = tf.getText();
-        if (s == null || s.trim().isEmpty())
-            throw new IllegalArgumentException("Falta " + nombre);
+        if (s == null || s.trim().isEmpty()) throw new IllegalArgumentException("Falta " + nombre);
         return Long.parseLong(s.trim());
     }
     private String leerTexto(JTextField tf, String nombre) {
         String s = tf.getText();
-        if (s == null || s.trim().isEmpty())
-            throw new IllegalArgumentException("Falta " + nombre);
+        if (s == null || s.trim().isEmpty()) throw new IllegalArgumentException("Falta " + nombre);
         return s.trim();
     }
     private int[] parseListaEnteros(JTextField tf) {
         String s = tf.getText();
-        if (s == null || s.trim().isEmpty())
-            throw new IllegalArgumentException("Falta la lista de semillas.");
-        String[] partes = s.split(",");
-        int[] arr = new int[partes.length];
-        for (int i = 0; i < partes.length; i++) {
-            arr[i] = Integer.parseInt(partes[i].trim());
-        }
+        if (s == null || s.trim().isEmpty()) return new int[0];
+        String[] p = s.split(",");
+        int[] arr = new int[p.length];
+        for (int i = 0; i < p.length; i++) arr[i] = Integer.parseInt(p[i].trim());
         return arr;
     }
 
-    // Utilidades de dígitos medios
     private String extraerMedios(String s, int k) {
-        int minLen = Math.max(2 * k, k + 2);
+        int minLen = Math.max(2*k, k+2);
         if (s.length() < minLen) {
             while (s.length() < minLen) s = "0" + s;
         }
@@ -283,7 +317,20 @@ public class Algoritmos extends JFrame {
         return x / Math.pow(10, k);
     }
 
+    // NUEVO: lectura y formateo de decimales
+    private int leerDecimales(JTextField tf) {
+        String s = tf.getText();
+        if (s == null || s.trim().isEmpty()) return 4; // por defecto
+        int d = Integer.parseInt(s.trim());
+        if (d < 0) d = 0;
+        if (d > 12) d = 12;
+        return d;
+    }
+    private String fmt(double r, int dec) {
+        return String.format("%." + dec + "f", r);
+    }
+
     public static void main(String[] args) {
-        EventQueue.invokeLater(() -> new Algoritmos().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> new Algoritmos().setVisible(true));
     }
 }
